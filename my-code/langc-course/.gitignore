@@ -1,0 +1,10 @@
+# Ignore environment variables
+.env
+
+# Ignore python virtual environments
+.venv/
+venv/
+ENV/
+
+# Ignore IDE specific files if you use VS Code / Cursor
+.vscode/
