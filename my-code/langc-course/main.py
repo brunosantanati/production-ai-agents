@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 from importlib.metadata import version
+import os
 
 load_dotenv()
 
@@ -8,6 +9,9 @@ lg_version = version("langgraph")
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 
+# Just for troubleshooting since I was having problems loading these keys
+#print("Loaded Key:", os.environ.get("ANTHROPIC_API_KEY"))
+#print("Loaded Key:", os.environ.get("OPENAI_API_KEY"))
 
 print(f"langchain-core version: {core_version}")
 print(f"langgraph version: {lg_version}")
@@ -16,9 +20,9 @@ print(f"langgraph version: {lg_version}")
 def main():
 
     # Test openai
-    #llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
-    #response = llm.invoke("Say 'setup complete!' in one word")
-    #print(f"Response from ChatOpenAI: {response}")
+    llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
+    response = llm.invoke("Say 'setup complete!' in one word")
+    print(f"Response from ChatOpenAI: {response}")
 
     # Test anthropic
     llm_anthropic = ChatAnthropic(model="claude-sonnet-4-5-20250929", temperature=0)
