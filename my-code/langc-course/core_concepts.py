@@ -49,6 +49,24 @@ def demo_batch_exectution():
     for text in zip(inputs, results):
         print(f"Input: {text[0]['text']} => Output: {text[1]}")
 
+def demo_streaming():
+    """Demonstrate streaming for real-time output."""
+    prompt = ChatPromptTemplate.from_template("Write a haiku about: {topic}")
+    model = ChatOpenAI(
+        model="gpt-4o-mini",
+        temperature=0.7,
+    )
+    parser = StrOutputParser()
+
+    chain = prompt | model | parser
+
+    # Streaming - run with streaming enabled
+    print("Streaming output: ")
+    for chunk in chain.stream({"topic": "nature"}):
+        print(chunk, end="", flush=True)
+    print()  # for newline after streaming
+
 if __name__ == "__main__":
     # demo_basic_chain()
-    demo_batch_exectution()
+    # demo_batch_exectution()
+    demo_streaming()
