@@ -30,5 +30,25 @@ def demo_basic_chain():
 
     return chain
 
+def demo_batch_exectution():
+    """Demonstrate batch execution for multiple inputs."""
+    prompt = ChatPromptTemplate.from_template("Translate to French: {text}")
+    model = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
+    parser = StrOutputParser()
+
+    chain = prompt | model | parser
+
+    # Batch - run with multiple inputs
+    inputs = [
+        {"text": "Hello, how are you?"},
+        {"text": "What is your name?"},
+        {"text": "Where is the nearest restaurant?"},
+    ]
+    results = chain.batch(inputs)
+
+    for text in zip(inputs, results):
+        print(f"Input: {text[0]['text']} => Output: {text[1]}")
+
 if __name__ == "__main__":
-    demo_basic_chain()
+    # demo_basic_chain()
+    demo_batch_exectution()
