@@ -4,6 +4,7 @@ LangChain Core Concepts - LCEL and Runnables
 
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain.chat_models import init_chat_model
@@ -130,10 +131,43 @@ def exercise_first_chain_mine():
 
     return chain
 
+def new_way():
+    # the univeral way to initialize a model
+    model = init_chat_model("gpt-4o-mini", temperature=0.7, max_tokens=1500)
+
+    # Or provider-specific (still works)
+
+    #from langchain_openai import ChatOpenAI
+    #from langchain_anthropic import ChatAnthropic
+
+    openai_model = ChatOpenAI(model="gpt-4o-mini",
+                              temperature=0.7,
+                              max_tokens=1500,
+                              timeout=30,
+                              max_retries=3)
+    
+    anthropic_model = ChatAnthropic(model="claude-sonnet-4-5-20250929")
+
+def new_way_mine():
+    
+    prompt = ChatPromptTemplate.from_template(
+        "You are a helpful assistant. Answer in one sentence: {question}"
+    )
+    # the univeral way to initialize a model
+    model = init_chat_model("gpt-4o-mini", temperature=0.7, max_tokens=1500)
+    parser = StrOutputParser()
+
+    chain = prompt | model | parser
+
+    result = chain.invoke({"question": "What is LangGraph?"})
+    print(f"Response: {result}")
+
+
 if __name__ == "__main__":
     # demo_basic_chain()
     # demo_batch_exectution()
     # demo_streaming()
     # demo_schema_inspection()
-    exercise_first_chain()
+    # exercise_first_chain()
     # exercise_first_chain_mine()
+    new_way_mine()
