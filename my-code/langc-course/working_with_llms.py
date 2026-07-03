@@ -94,8 +94,37 @@ def demo_message():
     response = model.invoke(messages)
     print(f"Follow-up response from the Pirate: {response.content}")
 
+# Exercise: Multi-model setup
+def exercise_multi_model():
+    """
+    EXERCISE: Create a function that:
+    1. Takes a question and a list of model names
+    2. Gets responses from all models
+    3. Returns a dict of {model_name: response}
+
+    Test with: question="What is AI?", models=["gpt-4o-mini", "gpt-4o"]
+    """
+
+    def get_responses(question: str, model_names: list[str]) -> dict[str, str]:
+        responses = {}
+        for model_name in model_names:
+            model = init_chat_model(
+                model=model_name,
+                temperature=0.7,
+                streaming=False,
+            )
+            response = model.invoke(question)
+            responses[model_name] = response.content
+        return responses
+
+    # Test the function
+    results = get_responses("What is AI?", ["gpt-4o-mini", "gpt-4o"])
+    for model, answer in results.items():
+        print(f"Response from {model}: {answer}\n")
+
 
 if __name__ == "__main__":
     # demo_init_chat_model()
     # demo_model_comparison()
-    demo_message()
+    # demo_message()
+    exercise_multi_model()
