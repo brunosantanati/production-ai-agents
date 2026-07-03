@@ -66,7 +66,23 @@ def demo_streaming():
         print(chunk, end="", flush=True)
     print()  # for newline after streaming
 
+def demo_schema_inspection():
+    """Demonstrate input/output schema inspection."""
+    prompt = ChatPromptTemplate.from_template("Summarize the following text: {text}")
+    model = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
+    parser = StrOutputParser()
+
+    chain = prompt | model | parser
+
+    # Inspect input and output schemas
+    input_schema = chain.input_schema.model_json_schema()
+    output_schema = chain.output_schema.model_json_schema()
+
+    print(f"Input Schema: {input_schema}")
+    print(f"Output Schema: {output_schema}")
+
 if __name__ == "__main__":
     # demo_basic_chain()
     # demo_batch_exectution()
-    demo_streaming()
+    # demo_streaming()
+    demo_schema_inspection()
