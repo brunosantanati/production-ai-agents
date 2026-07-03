@@ -81,6 +81,32 @@ def demo_schema_inspection():
     print(f"Input Schema: {input_schema}")
     print(f"Output Schema: {output_schema}")
 
+# ------- Exercise the demos -------#
+# Exercise: Build your first chain
+def exercise_first_chain():
+    """
+    EXERCISE: Create a chain that:
+    1. Takes a product name and target audience
+    2. Generates a marketing tagline
+    3. Returns just the tagline as a string
+
+    Test with: product="AI Course", audience="developers"
+    """
+
+    # YOUR CODE HERE
+    prompt = ChatPromptTemplate.from_template(
+        "Create a marketing tagline for a product named '{product}' targeting '{audience}'."
+    )
+    model = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
+    parser = StrOutputParser()
+
+    chain = prompt | model | parser
+
+    # Test the chain
+    result = chain.invoke({"product": "AI Course", "audience": "developers"})
+    print(f"Marketing Tagline: {result}")
+
+
 def exercise_first_chain_mine():
     """
     EXERCISE: Create a chain that:
@@ -109,4 +135,5 @@ if __name__ == "__main__":
     # demo_batch_exectution()
     # demo_streaming()
     # demo_schema_inspection()
-    exercise_first_chain_mine()
+    exercise_first_chain()
+    # exercise_first_chain_mine()
