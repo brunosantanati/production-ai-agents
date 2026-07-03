@@ -154,7 +154,8 @@ def new_way_mine():
         "You are a helpful assistant. Answer in one sentence: {question}"
     )
     # the univeral way to initialize a model
-    model = init_chat_model("gpt-4o-mini", temperature=0.7, max_tokens=1500)
+    # model = init_chat_model("gpt-4o-mini", temperature=0.7, max_tokens=1500) # OpenAI
+    model = init_chat_model("claude-sonnet-4-5-20250929", temperature=0.7, max_tokens=1500) # Anthropic
     parser = StrOutputParser()
 
     chain = prompt | model | parser
