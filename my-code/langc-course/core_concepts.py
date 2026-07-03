@@ -155,7 +155,9 @@ def new_way_mine():
     )
     # the univeral way to initialize a model
     # model = init_chat_model("gpt-4o-mini", temperature=0.7, max_tokens=1500) # OpenAI
-    model = init_chat_model("claude-sonnet-4-5-20250929", temperature=0.7, max_tokens=1500) # Anthropic
+    # model = init_chat_model("claude-sonnet-4-5-20250929", temperature=0.7, max_tokens=1500) # Anthropic
+    model = init_chat_model("claude-haiku-4-5-20251001", temperature=0.7, max_tokens=1500) # Anthropic
+    
     parser = StrOutputParser()
 
     chain = prompt | model | parser
