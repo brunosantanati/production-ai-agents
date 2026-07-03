@@ -9,6 +9,7 @@ Original source code (links):
 ## Useful links
 - [Claude API](https://platform.claude.com/dashboard)
 - [OpenAI API](https://platform.openai.com/home)
+- [LangChain Messages](https://docs.langchain.com/oss/python/langchain/messages)
 
 ## Commands used
 ```
