@@ -7,8 +7,9 @@ Original source code (links):
 2. The production API project can be found [here](https://github.com/pdichone/lang-production-api).
 
 ## Useful links
-- [Claude API](https://platform.claude.com/dashboard)
-- [OpenAI API](https://platform.openai.com/home)
+- [Claude Dashboard](https://platform.claude.com/dashboard)
+- [OpenAI Dashboard](https://platform.openai.com/home)
+- [LangSmith Dashboard](https://smith.langchain.com/)
 - [LangChain Messages](https://docs.langchain.com/oss/python/langchain/messages)
 
 ## Commands used
