@@ -101,7 +101,47 @@ def demo_passthrough_chain():
     result = chain.invoke({"question": "Who created LangChain?"})
     print(f"Answer: {result}")
 
+def demo_chain_branching():
+    """A chain that demonstrates branching functionality."""
+
+    # Different prompts for different intents
+    code_prompt = ChatPromptTemplate.from_template(
+        "You are a coding expert. Help with: {input}"
+    )
+    general_prompt = ChatPromptTemplate.from_template(
+        "You are a helpful assistant. Answer: {input}"
+    )
+
+    # Classifier
+    classifier_prompt = ChatPromptTemplate.from_template(
+        "Classify this as 'code' or 'general': {input}\nReturn only the classification."
+    )
+    classifer = classifier_prompt | model | StrOutputParser()
+
+    # Branching chain  based on classification
+    def is_code_question(input_dict):
+        classification = classifer.invoke(input_dict)
+        print(f"classification: {classification}")
+        return "code" in classification.lower()
+
+    branch = RunnableBranch(
+        (is_code_question, code_prompt | model | StrOutputParser()),
+        general_prompt | model | StrOutputParser(),  # default branch
+    )
+
+    # Test
+    questions = [
+        "How do I write a for loop in Python?",
+        "What's the weather like today?",
+    ]
+    for q in questions:
+        result = branch.invoke({"input": q})
+        print(f"Q: {q}")
+        print(f"A: {result[:100]}...\n")
+
+
 if __name__ == "__main__":
     # demo_basic_chain()
     # demo_parallel_chain()
-    demo_passthrough_chain()
+    # demo_passthrough_chain()
+    demo_chain_branching()
