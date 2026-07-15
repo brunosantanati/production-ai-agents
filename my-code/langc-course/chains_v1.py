@@ -139,9 +139,42 @@ def demo_chain_branching():
         print(f"Q: {q}")
         print(f"A: {result[:100]}...\n")
 
+def demo_debbuging():
+    prompt = ChatPromptTemplate.from_template("Say hello to {name}")
+    chain = prompt | model | StrOutputParser()
+
+    # Method 1: Get configuration
+    print("Chain input schema:", chain.input_schema.model_json_schema())
+    print("Chain output schema:", chain.output_schema.model_json_schema())
+
+    # Method 2: Use with_config for tacing
+    result = chain.with_config(
+        run_name="greeting_chain",
+        # tags="demo,debugging",
+    ).invoke({"name": "Alice"})
+    print(f"Greeting: {result}")
+
+    # Method 3: Inspect intermediate steps
+    # Using RunnableLambda for logging
+    def log_step(x, step_name=""):
+        print(f"[{step_name}] {type(x).__name__}: {str(x)[:100]}")
+        return x
+
+    debug_chain = (
+        prompt
+        | RunnableLambda(lambda x: log_step(x, "after_prompt"))
+        | model
+        | RunnableLambda(lambda x: log_step(x, "after_model"))
+        | StrOutputParser()
+    )
+
+    print("\nDebug chain execution:")
+    result = debug_chain.invoke({"name": "Debug"})
+    print(f"Greeting: {result}")
 
 if __name__ == "__main__":
     # demo_basic_chain()
     # demo_parallel_chain()
     # demo_passthrough_chain()
-    demo_chain_branching()
+    # demo_chain_branching()
+    demo_debbuging()
