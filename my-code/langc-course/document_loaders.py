@@ -51,6 +51,23 @@ def web_loader():
     print(f"Content length: {len(documents[0].page_content)} characters")
     print(f"Preview: {documents[0].page_content[:200]}...")
 
+def lazy_loader():
+
+    # Create temp directory with sample files
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create sample files
+        for i in range(5):
+            path = Path(tmpdir) / f"doc_{i}.txt"
+            path.write_text(f"This is document {i}. It contains sample content.")
+
+        loader = DirectoryLoader(tmpdir, glob="*.txt", loader_cls=TextLoader)
+
+        print("Initialized lazy loader for directory:", tmpdir)
+        for doc in loader.lazy_load():
+            print("Document Content Preview:", doc.page_content[:50], "...")
+            print("Metadata:", doc.metadata["source"])
+
 if __name__ == "__main__":
     # load_text_file()
-    web_loader()
+    # web_loader()
+    lazy_loader()
