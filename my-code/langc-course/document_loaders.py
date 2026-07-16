@@ -40,6 +40,17 @@ def load_text_file():
         # Clean up the temporary file
         os.remove(temp_file_path)
 
+def web_loader():
+    loader = WebBaseLoader(
+        "https://en.wikipedia.org/wiki/Web_scraping", bs_kwargs={"parse_only": None}
+    )
+    documents = loader.load()
+
+    print(f"Loaded {len(documents)} document(s) from web")
+    print(f"Source: {documents[0].metadata.get('source', 'N/A')}")
+    print(f"Content length: {len(documents[0].page_content)} characters")
+    print(f"Preview: {documents[0].page_content[:200]}...")
 
 if __name__ == "__main__":
-    load_text_file()
+    # load_text_file()
+    web_loader()
