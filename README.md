@@ -19,6 +19,7 @@ uv venv
 source .venv/bin/activate
 deactivate
 uv add langchain langchain-core langgraph langchain-openai langchain-anthropic python-dotenv
+uv add langchain_community
 uv sync
 touch .env
 uv run main.py
