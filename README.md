@@ -21,6 +21,7 @@ deactivate
 uv add langchain langchain-core langgraph langchain-openai langchain-anthropic python-dotenv
 uv add langchain_community
 uv add bs4
+uv add pypdf
 uv sync
 touch .env
 uv run main.py
