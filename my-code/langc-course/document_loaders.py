@@ -67,7 +67,35 @@ def lazy_loader():
             print("Document Content Preview:", doc.page_content[:50], "...")
             print("Metadata:", doc.metadata["source"])
 
+def doc_structure():
+    doc = Document(
+        page_content="This is a sample document.",
+        metadata={
+            "source": "manual_creation.txt",
+            "author": "Paulo",
+            "length": 30,
+            "tags": ["sample", "test"],
+            "created_at": "2024-06-01",
+        },
+    )
+
+    print("Document Structure:")
+    print(f"  page_content (type): {type(doc.page_content)}")
+    print(f"  page_content: {doc.page_content}")
+    print(f"  metadata: {doc.metadata}")
+
+    # Documents are immutable-ish, but you can create new ones
+    updated_doc = Document(
+        page_content=doc.page_content + " Additional content.",
+        metadata={**doc.metadata, "updated": True},
+    )
+    print(f"\nUpdated Document:")
+    print(f"  page_content (type): {type(updated_doc.page_content)}")
+    print(f"  page_content: {updated_doc.page_content}")
+    print(f"  metadata: {updated_doc.metadata}")
+
 if __name__ == "__main__":
     # load_text_file()
     # web_loader()
-    lazy_loader()
+    # lazy_loader()
+    doc_structure()
