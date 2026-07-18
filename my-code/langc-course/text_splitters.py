@@ -92,9 +92,25 @@ def overlap_importance():
     print(f"  Chunk 1 end: ...{chunks_with_overlap[0][-20:]}")
     print(f"  Chunk 2 start: {chunks_with_overlap[1][:20]}...")
 
+def markdown_splitter():
+    headers_to_consider = [
+        ("#", "h1"),
+        ("##", "h2"),
+        ("###", "h3"),
+    ]
+    splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers_to_consider)
+    chunks = splitter.split_text(SAMPLE_TEXT)
+
+    print(f"Markdown Splitter produced {len(chunks)} chunks.")
+    for i, chunk in enumerate(chunks):
+        print(f"--- Chunk {i} ---")
+        print(f" Metadata: {chunk.metadata}\n")
+        print(f" Content: {chunk.page_content[:200]}...\n")
 
 if __name__ == "__main__":
-    print("=== Recursive Character Text Splitter ===")
+    # print("=== Recursive Character Text Splitter ===")
     # recursive_splitter()
     # chunk_size_comparison()
-    overlap_importance()
+    # overlap_importance()
+    print("=== Markdown Header Text Splitter ===")
+    markdown_splitter()
