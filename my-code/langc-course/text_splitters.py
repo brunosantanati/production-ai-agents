@@ -72,7 +72,29 @@ def chunk_size_comparison():
         chunks = splitter.split_text(SAMPLE_TEXT)
         print(f" Size {size}: {len(chunks)} chunks")
 
+def overlap_importance():
+    text = "The quick brown fox jumps over the lazy dog. " * 10  # Repeated text
+
+    # without overlap
+    no_overlap = RecursiveCharacterTextSplitter(chunk_size=50, chunk_overlap=0)
+
+    # with overlap
+    with_overlap = RecursiveCharacterTextSplitter(chunk_size=50, chunk_overlap=20)
+
+    chunks_no_overlap = no_overlap.split_text(text)
+    chunks_with_overlap = with_overlap.split_text(text)
+
+    print("Without overlap:")
+    print(f"  Chunk 1 end: ...{chunks_no_overlap[0][-20:]}")
+    print(f"  Chunk 2 start: {chunks_no_overlap[1][:20]}...")
+
+    print("\nWith overlap:")
+    print(f"  Chunk 1 end: ...{chunks_with_overlap[0][-20:]}")
+    print(f"  Chunk 2 start: {chunks_with_overlap[1][:20]}...")
+
+
 if __name__ == "__main__":
     print("=== Recursive Character Text Splitter ===")
     # recursive_splitter()
-    chunk_size_comparison()
+    # chunk_size_comparison()
+    overlap_importance()
