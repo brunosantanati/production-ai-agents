@@ -48,6 +48,43 @@ Machine learning is used in many fields:
 5. Autonomous vehicles
 """.strip()
 
+SAMPLE_CODE = '''
+def quicksort(arr):
+    """
+    Quicksort implementation in Python.
+    Time complexity: O(n log n) average, O(n²) worst case.
+    """
+    if len(arr) <= 1:
+        return arr
+
+    pivot = arr[len(arr) // 2]
+    left = [x for x in arr if x < pivot]
+    middle = [x for x in arr if x == pivot]
+    right = [x for x in arr if x > pivot]
+
+    return quicksort(left) + middle + quicksort(right)
+
+
+def binary_search(arr, target):
+    """
+    Binary search implementation.
+    Requires sorted array.
+    Time complexity: O(log n)
+    """
+    left, right = 0, len(arr) - 1
+
+    while left <= right:
+        mid = (left + right) // 2
+        if arr[mid] == target:
+            return mid
+        elif arr[mid] < target:
+            left = mid + 1
+        else:
+            right = mid - 1
+
+    return -1
+'''
+
 def recursive_splitter():
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=500,
@@ -107,10 +144,22 @@ def markdown_splitter():
         print(f" Metadata: {chunk.metadata}\n")
         print(f" Content: {chunk.page_content[:200]}...\n")
 
+def code_splitter():
+    python_splitter = RecursiveCharacterTextSplitter.from_language(
+        language=Language.PYTHON, chunk_size=500, chunk_overlap=50
+    )
+    chunks = python_splitter.split_text(SAMPLE_CODE)
+    print(f"Code Splitter produced {len(chunks)} chunks.")
+    for i, chunk in enumerate(chunks):
+        print(f"\nChunk {i} ({len(chunk)} chars):")
+        print(chunk[:150] + "..." if len(chunk) > 150 else chunk)
+
 if __name__ == "__main__":
     # print("=== Recursive Character Text Splitter ===")
     # recursive_splitter()
     # chunk_size_comparison()
     # overlap_importance()
-    print("=== Markdown Header Text Splitter ===")
-    markdown_splitter()
+    # print("=== Markdown Header Text Splitter ===")
+    # markdown_splitter()
+    print("=== Code Splitter ===")
+    code_splitter()
