@@ -174,9 +174,73 @@ def as_retriever():
                 f"Result {i+1}: {doc.page_content} (Source: {doc.metadata['source']})"
             )
 
+# Exercise: Set up Chroma + retriever
+def exercise_vector_store_setup():
+    """
+    EXERCISE: Create a complete vector store setup that:
+    1. Takes a list of text strings
+    2. Splits them into chunks
+    3. Stores in Chroma
+    4. Returns a configured retriever
+
+    Test with sample documents.
+    """
+
+    def create_retriever(
+        texts: list[str], chunk_size: int = 500, chunk_overlap: int = 50, k: int = 3
+    ):
+
+        # Create documents
+        docs = [Document(page_content=t) for t in texts]
+
+        # Split
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size, chunk_overlap=chunk_overlap
+        )
+        split_docs = splitter.split_documents(docs)
+
+        # Create vector store (in-memory for exercise)
+        vectorstore = Chroma.from_documents(
+            documents=split_docs, embedding=embeddings_model
+        )
+
+        # Return retriever
+        return vectorstore.as_retriever(
+            search_type="similarity", search_kwargs={"k": k}
+        )
+
+    # Test the function
+    # Test
+    sample_texts = [
+        "Python is a versatile programming language used in web development, "
+        "data science, machine learning, and automation. It has a simple syntax "
+        "that makes it easy to learn and read.",
+        "JavaScript is the language of the web. It runs in browsers and on "
+        "servers with Node.js. Modern frameworks like React and Vue make "
+        "building web applications efficient.",
+        "Rust is a systems programming language focused on safety and "
+        "performance. It prevents common bugs like null pointer dereferences "
+        "and data races at compile time.",
+    ]
+
+    retriever = create_retriever(sample_texts, chunk_size=200, chunk_overlap=20, k=2)
+
+    print("Testing retriever:\n")
+    queries = [
+        "What's good for web development?",
+        "Which language is safest?",
+    ]
+    for query in queries:
+        print(f"Query: {query}")
+        results = retriever.invoke(query)
+        for doc in results:
+            print(f"  - {doc.page_content[:60]}...")
+        print()
+
 if __name__ == "__main__":
     # chroma_basics()
     # similarity_search_with_scores()
     # metadata_filtering()
     # persist_chroma()
-    as_retriever()
+    # as_retriever()
+    exercise_vector_store_setup()
