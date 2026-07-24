@@ -113,7 +113,36 @@ def metadata_filtering():
                 f"Result {i+1}: {doc.page_content} (Source: {doc.metadata['source']})"
             )
 
+def persist_chroma():
+    persist_dir = "./chroma_db/"
+
+    vectorstore = Chroma.from_documents(
+        documents=SAMPLE_DOCS,
+        embedding=embeddings_model,
+        persist_directory=persist_dir,
+    )
+
+    original_count = vectorstore._collection.count()
+    print(f"Persisted vector store with {original_count} documents.")
+    print(f"Vector store persisted at: {persist_dir}")
+
+    # simulate restart - load from disk
+    del vectorstore
+
+    reloaded = Chroma(
+        embedding_function=embeddings_model,
+        persist_directory=persist_dir,
+    )
+
+    reloaded_count = reloaded._collection.count()
+    print(f"Reloaded vector store with {reloaded_count} documents.")
+
+    # verify search still works
+    results = reloaded.similarity_search("LangChain", k=2)
+    print(f"Search result: {results[0].page_content[:50]}...")
+
 if __name__ == "__main__":
     # chroma_basics()
     # similarity_search_with_scores()
-    metadata_filtering()
+    # metadata_filtering()
+    persist_chroma()
