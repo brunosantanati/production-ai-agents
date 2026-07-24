@@ -8,23 +8,36 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+# embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 
 # Single text query / document
-embedding = embeddings.embed_query("This is a test document.")
+# embedding = embeddings.embed_query("This is a test document.")
 # print(f"Embedding for single text: {embedding}")
 
-print(len(embedding))  # Should print 1536 for text-embedding-3-small
+#print(len(embedding))  # Should print 1536 for text-embedding-3-small
 
 
 # multiple texts
-embeds = embeddings.embed_documents(
-    [
-        "This is the first document.",
-        "This is the second document."
-    ]
-)
+# embeds = embeddings.embed_documents(
+#     [
+#         "This is the first document.",
+#         "This is the second document."
+#     ]
+# )
 
-print(f"Embeddings for multiple texts: {embeds}")
-print(f"Number of embeddings returned: {len(embeds)}")  # Should print 2
-print(f"Length of each embedding: {len(embeds[0])}")  # Should print 1536 for text-embedding-3-small
+# print(f"Embeddings for multiple texts: {embeds}")
+# print(f"Number of embeddings returned: {len(embeds)}")  # Should print 2
+# print(f"Length of each embedding: {len(embeds[0])}")  # Should print 1536 for text-embedding-3-small
+
+# Free options
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_ollama import OllamaEmbeddings
+
+embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2") # 384 dimensions
+embedding = embeddings.embed_query("This is a test document.")
+print(len(embedding))
+
+# Ollama 
+# embeddings = OllamaEmbeddings(model="llama2-7b-embedding-q4_0")
+# embedding = embeddings.embed_query("This is a test document.")
+# print(len(embedding))

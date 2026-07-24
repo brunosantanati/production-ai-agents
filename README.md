@@ -22,6 +22,9 @@ uv add langchain langchain-core langgraph langchain-openai langchain-anthropic p
 uv add langchain_community
 uv add bs4
 uv add pypdf
+uv add langchain_ollama
+uv add sentence-transformers
+uv add langchain-huggingface
 uv sync
 touch .env
 uv run main.py
