@@ -4,14 +4,14 @@ import numpy as np
 
 load_dotenv()
 
-embeddings_model = OpenAIEmbeddings(model="text-embedding-3-small")
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 
 
 def basic_embeddings():
 
     # single text
     text = "What is Machine Learning?"
-    single_embedding = embeddings_model.embed_query(text)
+    single_embedding = embeddings.embed_query(text)
     print(f"Vector dimensions: {len(single_embedding)}")
     print(f"First 5 values: {single_embedding[:5]}")
     print(f"Vector norm: {np.linalg.norm(single_embedding):.4f}")
@@ -24,7 +24,7 @@ def batch_embeddings():
         "How does a neural network work?",
     ]
 
-    batch_embedding = embeddings_model.embed_documents(text)
+    batch_embedding = embeddings.embed_documents(text)
     for i, emb in enumerate(batch_embedding):
         print(f"Text {i+1} - Vector dimensions: {len(emb)}")
         print(f"Text {i+1} - First 5 values: {emb[:5]}")
@@ -46,8 +46,8 @@ def similarity_search():
     query = "What programming languages exist?"
 
     # embed documents and query
-    doc_vector = embeddings_model.embed_documents(docs)
-    query_vector = embeddings_model.embed_query(query)
+    doc_vector = embeddings.embed_documents(docs)
+    query_vector = embeddings.embed_query(query)
 
     # compute cosine similarities
     def cosine_similarity(vec1, vec2):
