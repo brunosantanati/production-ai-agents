@@ -141,8 +141,42 @@ def persist_chroma():
     results = reloaded.similarity_search("LangChain", k=2)
     print(f"Search result: {results[0].page_content[:50]}...")
 
+def as_retriever():
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        vectorstore = Chroma.from_documents(
+            documents=SAMPLE_DOCS,
+            embedding=OpenAIEmbeddings(model="text-embedding-3-small"),
+            persist_directory=tmpdir,
+        )
+
+        # basic retriever usage
+        retriever = vectorstore.as_retriever(
+            search_type="similarity", search_kwargs={"k": 3}
+        )
+        # use retriever to get relevant documents
+        docs = retriever.invoke("How do I build AI applications?")
+
+        print("Retriever results:")
+        for i, doc in enumerate(docs):
+            print(
+                f"Result {i+1}: {doc.page_content} (Source: {doc.metadata['source']})"
+            )
+
+        mmr_retriever = vectorstore.as_retriever(
+            search_type="mmr",
+            search_kwargs={"k": 3, "fetch_k": 5},  # fetch 5 docs and return 3 diverse
+        )
+        mmr_docs = mmr_retriever.invoke("vector databases and embeddings")
+        print("\nMMR Retriever results:")
+        for i, doc in enumerate(mmr_docs):
+            print(
+                f"Result {i+1}: {doc.page_content} (Source: {doc.metadata['source']})"
+            )
+
 if __name__ == "__main__":
     # chroma_basics()
     # similarity_search_with_scores()
     # metadata_filtering()
-    persist_chroma()
+    # persist_chroma()
+    as_retriever()
