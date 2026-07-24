@@ -25,6 +25,7 @@ uv add pypdf
 uv add langchain_ollama
 uv add sentence-transformers
 uv add langchain-huggingface
+uv add langchain_chroma
 uv sync
 touch .env
 uv run main.py
