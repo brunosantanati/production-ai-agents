@@ -67,6 +67,24 @@ def chroma_basics():
                 f"Result {i+1}: {doc.page_content} (Source: {doc.metadata['source']})"
             )
 
+def similarity_search_with_scores():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # create vector store from documents
+        vectorstore = Chroma.from_documents(
+            documents=SAMPLE_DOCS, embedding=embeddings_model, persist_directory=tmpdir
+        )
+
+        # perform similarity search with scores
+        query = "Explain vector stores."
+        results_with_scores = vectorstore.similarity_search_with_score(query, k=3)
+
+        print(f"Top 3 results with scores for query '{query}':")
+        for i, (doc, score) in enumerate(results_with_scores):
+            final_score = 1 / (1 + score)  # Convert distance to similarity
+            print(
+                f"Result {i+1}: {doc.page_content} (Score: {final_score:.4f}, Source: {doc.metadata['source']})"
+            )
 
 if __name__ == "__main__":
-    chroma_basics()
+    # chroma_basics()
+    similarity_search_with_scores()
