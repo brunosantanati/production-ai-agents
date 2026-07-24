@@ -85,6 +85,35 @@ def similarity_search_with_scores():
                 f"Result {i+1}: {doc.page_content} (Score: {final_score:.4f}, Source: {doc.metadata['source']})"
             )
 
+def metadata_filtering():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # create vector store from documents
+        vectorstore = Chroma.from_documents(
+            documents=SAMPLE_DOCS, embedding=embeddings_model, persist_directory=tmpdir
+        )
+
+        query = "What databases are available?"
+
+        # without metadata filtering
+        results = vectorstore.similarity_search(query, k=5)
+        print(f"Results without metadata filtering for query '{query}':")
+        for i, doc in enumerate(results):
+            print(
+                f"Result {i+1}: {doc.page_content} (Source: {doc.metadata['source']})"
+            )
+
+        # with metadata filtering
+        filter_criteria = {"topic": "database"}
+        filtered_results = vectorstore.similarity_search(
+            query, k=5, filter=filter_criteria
+        )
+        print(f"\nResults with metadata filtering for query '{query}':")
+        for i, doc in enumerate(filtered_results):
+            print(
+                f"Result {i+1}: {doc.page_content} (Source: {doc.metadata['source']})"
+            )
+
 if __name__ == "__main__":
     # chroma_basics()
-    similarity_search_with_scores()
+    # similarity_search_with_scores()
+    metadata_filtering()
