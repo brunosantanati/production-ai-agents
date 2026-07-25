@@ -127,5 +127,52 @@ and if you don't know the answer, just say "I don't know."""
         print(f"Q: {q}")
         print(f"A: {answer}\n")
 
+def demo_rag_with_sources():
+
+    vectorstore = create_kb()
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+
+    prompt = ChatPromptTemplate.from_template(
+        """
+Answer the question based on the context below. Include which sources you used.
+
+Context:
+{context}
+
+Question: {question}
+
+Answer (include sources):"""
+    )
+
+    def format_docs_with_sources(docs):
+        formatted = []
+        for i, doc in enumerate(docs):
+            source = doc.metadata.get("source", "unknown")
+            formatted.append(f"[{i+1}] {source}:\n{doc.page_content}")
+        result = "\n\n".join(formatted)
+    
+        # Add this print statement to inspect what gets sent to the prompt!
+        # print("--- RAW CONTEXT SENT TO LLM ---")
+        # print(result)
+        # print("--------------------------------\n")
+        
+        return result
+
+    rag_chain = (
+        {
+            "context": retriever | format_docs_with_sources,
+            "question": RunnablePassthrough(),
+        }
+        | prompt
+        | llm
+        | StrOutputParser()
+    )
+
+    print("RAG with Sources:\n")
+    answer = rag_chain.invoke("What are the core components of LangChain?")
+    print(f"Q: What are the core components?\n")
+    print(f"A: {answer}")
+
 if __name__ == "__main__":
-    demo_basic_rag()
+    # demo_basic_rag()
+    demo_rag_with_sources()
