@@ -214,8 +214,55 @@ Answer:"""
         print(f"Q: {q}")
         print(f"A: {answer}\n")
 
+def demo_structured_rag():
+    """RAG with structured output."""
+
+    vectorstore = create_kb()
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+
+    class RAGResponse(BaseModel):
+        """Structured RAG response."""
+
+        answer: str = Field(description="The answer to the question")
+        confidence: str = Field(description="high, medium, or low")
+        sources_used: List[str] = Field(description="List of sources referenced")
+        follow_up: str = Field(description="Suggested follow-up question")
+
+    structured_llm = llm.with_structured_output(RAGResponse)
+
+    prompt = ChatPromptTemplate.from_template(
+        """
+Based on the context below, answer the question.
+
+Context:
+{context}
+
+Question: {question}
+
+Provide a structured response."""
+    )
+
+    def format_docs(docs):
+        return "\n\n".join(
+            f"[{doc.metadata.get('source', 'unknown')}]: {doc.page_content}"
+            for doc in docs
+        )
+
+    rag_chain = (
+        {"context": retriever | format_docs, "question": RunnablePassthrough()}
+        | prompt
+        | structured_llm
+    )
+    print("Structured RAG Demo:\n")
+    result = rag_chain.invoke("What is LangGraph?")
+
+    print(f"Answer: {result.answer}")
+    print(f"Confidence: {result.confidence}")
+    print(f"Sources: {result.sources_used}")
+    print(f"Follow-up: {result.follow_up}")
 
 if __name__ == "__main__":
     # demo_basic_rag()
     # demo_rag_with_sources()
-    demo_rag_with_fallback()
+    # demo_rag_with_fallback()
+    demo_structured_rag()
