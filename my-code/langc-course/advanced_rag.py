@@ -378,8 +378,66 @@ LangSmith provides observability for LangChain/LangGraph applications, offering 
     print(f"Length: {len(parent_docs[0].page_content)} chars")
     print(f"Content preview: {parent_docs[0].page_content[:300]}...")
 
+def demo_advanced_rag_chain():
+    """Complete RAG chain with advanced retrieval."""
+
+    print("=" * 60)
+    print("COMPLETE ADVANCED RAG CHAIN")
+    print("Multi-query + Compression + RAG")
+    print("=" * 60)
+
+    vectorstore = create_base_vectorstore()
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+
+    # Multi-query for better recall
+    multi_retriever = MultiQueryRetriever.from_llm(
+        retriever=vectorstore.as_retriever(search_kwargs={"k": 3}), llm=llm
+    )
+
+    # Compression to focus on relevant info
+    compressor = LLMChainExtractor.from_llm(llm)
+    advanced_retriever = ContextualCompressionRetriever(
+        base_compressor=compressor, base_retriever=multi_retriever
+    )
+
+    # RAG prompt
+    prompt = ChatPromptTemplate.from_template(
+        """
+Answer the question based on the following context. Be specific and cite which technologies you're referring to.
+
+Context:
+{context}
+
+Question: {question}
+
+Answer:"""
+    )
+
+    def format_docs(docs):
+        return "\n\n".join(doc.page_content for doc in docs)
+
+    # Build chain
+    rag_chain = (
+        {"context": advanced_retriever | format_docs, "question": RunnablePassthrough()}
+        | prompt
+        | llm
+        | StrOutputParser()
+    )
+
+    # Test
+    questions = [
+        "What options do I have for building AI agents?",
+        "How can I store and search embeddings?",
+    ]
+
+    for q in questions:
+        print(f"\nQ: {q}")
+        answer = rag_chain.invoke(q)
+        print(f"A: {answer}")
+
 if __name__ == "__main__":
     # demo_multi_query_retriever()
     # demo_contextual_compression()
     # demo_ensemble_hybrid_search()
-    demo_parent_document_retriever()
+    # demo_parent_document_retriever()
+    demo_advanced_rag_chain()
