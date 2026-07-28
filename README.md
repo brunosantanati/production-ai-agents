@@ -26,6 +26,7 @@ uv add langchain_ollama
 uv add sentence-transformers
 uv add langchain-huggingface
 uv add langchain_chroma
+uv add rank_bm25
 uv sync
 touch .env
 uv run main.py
