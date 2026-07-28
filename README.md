@@ -29,4 +29,16 @@ uv add langchain_chroma
 uv sync
 touch .env
 uv run main.py
+
+Error:
+-------
+$ uv run advanced_rag.py
+snap-confine is packaged without necessary permissions and cannot continue
+required permitted capability cap_dac_override not found in current capabilities:
+  = 
+-------
+Fix:
+-------
+sudo systemctl restart snapd.apparmor apparmor
+-------
 ```
