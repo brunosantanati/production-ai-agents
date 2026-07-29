@@ -86,5 +86,72 @@ def demo_basic_memory():
         role = "Human" if isinstance(msg, HumanMessage) else "AI"
         print(f"  {role}: {msg.content[:50]}...")
 
+def demo_multi_sessions():
+
+    print("=" * 60)
+    print("MULTIPLE CONVERSATION SESSIONS")
+    print("Each user gets their own memory")
+    print("=" * 60)
+
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", "You are a helpful assistant. Remember user details."),
+            MessagesPlaceholder(variable_name="history"),
+            ("human", "{input}"),
+        ]
+    )
+
+    chain = prompt | llm | StrOutputParser()
+
+    store: Dict[str, InMemoryChatMessageHistory] = {}
+
+    def get_session_history(session_id: str) -> BaseChatMessageHistory:
+        if session_id not in store:
+            store[session_id] = InMemoryChatMessageHistory()
+        return store[session_id]
+
+    chain_with_history = RunnableWithMessageHistory(
+        chain,
+        get_session_history,
+        input_messages_key="input",
+        history_messages_key="history",
+    )
+
+    # Simulate two users
+    user_a_config = {"configurable": {"session_id": "user_a"}}
+    user_b_config = {"configurable": {"session_id": "user_b"}}
+
+    # User A conversation
+    print("\n--- User A ---")
+    print("User A: My favorite language is Python")
+    resp = chain_with_history.invoke(
+        {"input": "My favorite language is Python"}, config=user_a_config
+    )
+    print(f"AI: {resp}")
+
+    # User B conversation
+    print("\n--- User B ---")
+    print("User B: I love JavaScript")
+    resp = chain_with_history.invoke(
+        {"input": "I love JavaScript"}, config=user_b_config
+    )
+    print(f"AI: {resp}")
+
+    # Ask each user about their preference
+    print("\n--- Asking each about their preference ---")
+
+    print("\nUser A: What's my favorite language?")
+    resp = chain_with_history.invoke(
+        {"input": "What's my favorite language?"}, config=user_a_config
+    )
+    print(f"AI: {resp}")
+
+    print("\nUser B: What's my favorite language?")
+    resp = chain_with_history.invoke(
+        {"input": "What's my favorite language?"}, config=user_b_config
+    )
+    print(f"AI: {resp}")
+
 if __name__ == "__main__":
-    demo_basic_memory()
+    # demo_basic_memory()
+    demo_multi_sessions()
