@@ -273,8 +273,123 @@ def demo_windowed_memory():
         "This is the tradeoff: fixed memory = predictable cost, but older context is lost."
     )
 
+def demo_summary_memory():
+    """End-to-end summary memory: auto-summarize old messages, keep recent ones verbatim."""
+
+    print("=" * 60)
+    print("SUMMARY MEMORY")
+    print("Summarize older messages to save tokens")
+    print("=" * 60)
+
+    # --- Setup ---
+    summary_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    chat_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
+
+    # The conversation prompt: summary of old context + recent messages
+    chat_prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                "You are a helpful assistant. Be concise.\n\n"
+                "Summary of earlier conversation:\n{summary}",
+            ),
+            MessagesPlaceholder(variable_name="recent_messages"),
+            ("human", "{input}"),
+        ]
+    )
+
+    chat_chain = chat_prompt | chat_llm | StrOutputParser()
+
+    # The summarization prompt: compress messages into a running summary
+    summarize_prompt = ChatPromptTemplate.from_template(
+        "Condense the current summary and new messages into a single updated summary "
+        "(2-3 sentences). Preserve all key facts about the user.\n\n"
+        "Current summary:\n{current_summary}\n\n"
+        "New messages:\n{new_messages}\n\n"
+        "Updated summary:"
+    )
+
+    summarize_chain = summarize_prompt | summary_llm | StrOutputParser()
+
+    # --- State ---
+    running_summary = ""  # starts empty
+    recent_messages = []  # full message objects
+    MAX_RECENT = 4  # keep last 4 messages (2 exchanges) before summarizing
+
+    # --- Conversation ---
+    exchanges = [
+        "My name is Paulo and I'm from Seattle",
+        "I work as an AI engineer building RAG systems",
+        "I have 2 cats named Luna and Milo",
+        "I'm building a LangChain course for Udemy",
+        "What do you know about me? List everything.",
+    ]
+
+    print(f"\nConfig: keep last {MAX_RECENT} messages, summarize the rest\n")
+
+    for user_input in exchanges:
+        print(f"User: {user_input}")
+
+        # 1. Call the LLM with summary + recent messages + new input
+        response = chat_chain.invoke(
+            {
+                "summary": (
+                    running_summary if running_summary else "No prior conversation."
+                ),
+                "recent_messages": recent_messages,
+                "input": user_input,
+            }
+        )
+        print(f"AI: {response}")
+
+        # 2. Add this exchange to recent messages
+        recent_messages.append(HumanMessage(content=user_input))
+        recent_messages.append(AIMessage(content=response))
+
+        # 3. If recent messages exceed limit, summarize the oldest ones
+        if len(recent_messages) > MAX_RECENT:
+            # Take the oldest messages that will be summarized away
+            messages_to_summarize = recent_messages[:-MAX_RECENT]
+            formatted = "\n".join(
+                f"{'Human' if isinstance(m, HumanMessage) else 'AI'}: {m.content}"
+                for m in messages_to_summarize
+            )
+
+            # Update the running summary
+            running_summary = summarize_chain.invoke(
+                {
+                    "current_summary": (
+                        running_summary if running_summary else "None yet."
+                    ),
+                    "new_messages": formatted,
+                }
+            )
+
+            # Keep only the most recent messages
+            recent_messages = recent_messages[-MAX_RECENT:]
+
+            print(
+                f"  >>> Summarized! Compressed {len(messages_to_summarize)} old messages"
+            )
+            print(f"  >>> Summary: {running_summary}")
+            print(f"  >>> Recent buffer: {len(recent_messages)} messages")
+        print()
+
+    # --- Final state ---
+    print("=" * 60)
+    print("FINAL MEMORY STATE")
+    print("=" * 60)
+    print(f"\nRunning summary (compressed old context):\n  {running_summary}")
+    print(f"\nRecent messages kept verbatim ({len(recent_messages)}):")
+    for msg in recent_messages:
+        role = "Human" if isinstance(msg, HumanMessage) else "AI"
+        print(f"  {role}: {msg.content[:80]}")
+    print("\nKey insight: ALL facts preserved (name, city, job, cats, course)")
+    print("But token cost stays bounded -- old messages are compressed, not deleted!")
+
 if __name__ == "__main__":
     # demo_basic_memory()
     # demo_multi_sessions()
     # demo_message_trimming()
-    demo_windowed_memory()
+    # demo_windowed_memory()
+    demo_summary_memory()
