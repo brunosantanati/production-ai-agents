@@ -196,7 +196,85 @@ def demo_message_trimming():
         role = type(msg).__name__.replace("Message", "")
         print(f"  {role}: {msg.content[:60]}...")
 
+def demo_windowed_memory():
+    """Implement sliding window memory manually."""
+
+    print("=" * 60)
+    print("WINDOWED MEMORY (Keep Last K)")
+    print("Fixed-size conversation window")
+    print("=" * 60)
+
+    class WindowedChatHistory(InMemoryChatMessageHistory):
+        """Chat history that keeps only last k message pairs."""
+
+        k: int = 3  # Pydantic field - number of exchange pairs to keep
+
+        def add_messages(self, messages):
+            super().add_messages(messages)
+            # Keep only last k pairs (2k messages: human + ai)
+            if len(self.messages) > self.k * 2:
+                self.messages = self.messages[-(self.k * 2) :]
+
+    store: Dict[str, WindowedChatHistory] = {}
+
+    def get_session_history(session_id: str) -> BaseChatMessageHistory:
+        if session_id not in store:
+            store[session_id] = WindowedChatHistory(k=2)
+        return store[session_id]
+
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", "You are a helpful assistant."),
+            MessagesPlaceholder(variable_name="history"),
+            ("human", "{input}"),
+        ]
+    )
+
+    chain = prompt | llm | StrOutputParser()
+
+    chain_with_history = RunnableWithMessageHistory(
+        chain,
+        get_session_history,
+        input_messages_key="input",
+        history_messages_key="history",
+    )
+
+    config = {"configurable": {"session_id": "windowed_test"}}
+
+    # Simulate a conversation with more than 2 pairs
+    exchanges = [
+        "My name is Paulo",
+        "I live in Seattle",
+        "I work as an AI engineer",
+        "I have 2 cats",
+        "What do you remember about me?",
+    ]
+
+    print("\nConversation with k=2 window:")
+    for i, msg in enumerate(exchanges, 1):
+        print(f"\nUser: {msg}")
+        response = chain_with_history.invoke({"input": msg}, config=config)
+        print(f"AI: {response}")
+
+        # Show window state after each exchange so students SEE it sliding
+        history = store["windowed_test"].messages
+        print(f"  [Window: {len(history)} msgs] ", end="")
+        facts_in_memory = [
+            m.content[:40] for m in history if isinstance(m, HumanMessage)
+        ]
+        print(f"Remembers: {facts_in_memory}")
+
+    # Final state - show what survived and what was lost
+    print("\n" + "=" * 60)
+    print("RESULT: Window only kept last 2 exchanges!")
+    print("Lost: name (Paulo), city (Seattle), AND job (AI engineer)")
+    print("Kept: cats + the 'remember' question")
+    print(
+        "This is the tradeoff: fixed memory = predictable cost, but older context is lost."
+    )
+
 if __name__ == "__main__":
     # demo_basic_memory()
     # demo_multi_sessions()
-    demo_message_trimming()
+    # demo_message_trimming()
+    demo_windowed_memory()
