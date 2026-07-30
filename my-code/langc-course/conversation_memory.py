@@ -452,10 +452,147 @@ def exercise_persistent_memory():
     if os.path.exists(db_path):
         os.remove(db_path)
 
+def exercise_persistent_memory_proof():
+    """
+    EXERCISE: Build a chatbot with:
+    1. Persistent memory (SQLite)
+    2. Proof that messages survive across separate chain instances
+    3. User preference tracking
+
+    Key idea: We create the chain TWICE to simulate two separate program runs.
+    The second run reads from the same SQLite DB and recalls what the first run stored.
+    """
+
+    print("=" * 60)
+    print("EXERCISE: Persistent Memory Chatbot")
+    print("=" * 60)
+
+    from langchain_community.chat_message_histories import SQLChatMessageHistory
+    import sqlite3
+    import os
+
+    db_path = "./chat_history.db"
+    connection_string = f"sqlite:///{db_path}"
+    session_id = "persistent_user"
+
+    # Clean slate
+    if os.path.exists(db_path):
+        os.remove(db_path)
+
+    # --- Helper: build a fresh chain (simulates a new program run) ---
+    def build_chain():
+        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
+
+        def get_session_history(sid: str) -> BaseChatMessageHistory:
+            return SQLChatMessageHistory(
+                session_id=sid,
+                connection=connection_string,
+            )
+
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    "You are a helpful assistant. Remember user preferences and facts.",
+                ),
+                MessagesPlaceholder(variable_name="history"),
+                ("human", "{input}"),
+            ]
+        )
+
+        chain = prompt | llm | StrOutputParser()
+
+        return RunnableWithMessageHistory(
+            chain,
+            get_session_history,
+            input_messages_key="input",
+            history_messages_key="history",
+        )
+
+    config = {"configurable": {"session_id": session_id}}
+
+    # =====================================================
+    # RUN 1 -- Store preferences (simulates first session)
+    # =====================================================
+    print("\n--- RUN 1: Storing preferences ---\n")
+
+    chain_v1 = build_chain()
+
+    run1_messages = [
+        "My name is Paulo. I prefer dark mode themes and Python over JavaScript.",
+        "I also like my responses concise -- no fluff.",
+    ]
+
+    for msg in run1_messages:
+        print(f"User: {msg}")
+        response = chain_v1.invoke({"input": msg}, config=config)
+        print(f"AI:   {response}\n")
+
+    # Throw away the chain object entirely -- no in-memory state survives
+    del chain_v1
+
+    # =====================================================
+    # PROOF: Inspect the raw SQLite database
+    # =====================================================
+    print("--- DATABASE PROOF ---\n")
+    print(f"Database file exists: {os.path.exists(db_path)}")
+    print(f"Database size: {os.path.getsize(db_path)} bytes\n")
+
+    conn = sqlite3.connect(db_path)
+    cursor = conn.execute("SELECT * FROM message_store ORDER BY rowid")
+    rows = cursor.fetchall()
+    print(f"Total messages stored in DB: {len(rows)}\n")
+
+    for i, row in enumerate(rows):
+        print(
+            f"  Row {i + 1}: session={row[0] if len(row) > 0 else 'N/A'}, "
+            f"message (first 80 chars): {str(row[1])[:80] if len(row) > 1 else 'N/A'}..."
+        )
+    conn.close()
+
+    # =====================================================
+    # RUN 2 -- Brand new chain, same DB (simulates restart)
+    # =====================================================
+    print("\n--- RUN 2: Fresh chain, testing recall ---\n")
+
+    chain_v2 = build_chain()
+
+    recall_questions = [
+        "What's my name?",
+        "What theme do I prefer?",
+        "What programming language do I prefer?",
+        "How do I like my responses?",
+    ]
+
+    for msg in recall_questions:
+        print(f"User: {msg}")
+        response = chain_v2.invoke({"input": msg}, config=config)
+        print(f"AI:   {response}\n")
+
+    del chain_v2
+
+    # =====================================================
+    # FINAL: Show total messages accumulated
+    # =====================================================
+    print("--- FINAL DATABASE STATE ---\n")
+    conn = sqlite3.connect(db_path)
+    cursor = conn.execute("SELECT COUNT(*) FROM message_store")
+    count = cursor.fetchone()[0]
+    conn.close()
+
+    print(f"Total messages in DB after both runs: {count}")
+    print("Key insight: The second chain had ZERO in-memory history.")
+    print("Everything was loaded from SQLite -- true persistence!")
+
+    # Cleanup
+    if os.path.exists(db_path):
+        os.remove(db_path)
+
 if __name__ == "__main__":
     # demo_basic_memory()
     # demo_multi_sessions()
     # demo_message_trimming()
     # demo_windowed_memory()
     # demo_summary_memory()
-    exercise_persistent_memory()
+    # exercise_persistent_memory()
+    exercise_persistent_memory_proof()
