@@ -387,9 +387,75 @@ def demo_summary_memory():
     print("\nKey insight: ALL facts preserved (name, city, job, cats, course)")
     print("But token cost stays bounded -- old messages are compressed, not deleted!")
 
+# Exercise
+def exercise_persistent_memory():
+    """
+    EXERCISE: Build a chatbot with:
+    1. Persistent memory (SQLite)
+    2. Automatic summarization after 10 messages
+    3. User preference tracking
+
+    Hint: Combine RunnableWithMessageHistory with SQLChatMessageHistory
+    """
+
+    print("=" * 60)
+    print("EXERCISE: Persistent Memory Chatbot")
+    print("=" * 60)
+
+    from langchain_community.chat_message_histories import SQLChatMessageHistory
+    import os
+
+    # Use SQLite for persistence
+    db_path = "./chat_history.db"
+
+    def get_session_history(session_id: str) -> BaseChatMessageHistory:
+        return SQLChatMessageHistory(
+            session_id=session_id, connection=f"sqlite:///{db_path}"
+        )
+
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", "You are a helpful assistant. Remember user preferences."),
+            MessagesPlaceholder(variable_name="history"),
+            ("human", "{input}"),
+        ]
+    )
+    chain = prompt | llm | StrOutputParser()
+
+    chain_with_history = RunnableWithMessageHistory(
+        chain,
+        get_session_history,
+        input_messages_key="input",
+        history_messages_key="history",
+    )
+
+    config = {"configurable": {"session_id": "persistent_user"}}
+
+    print("\nPersistent memory chatbot:")
+    print("(Messages saved to SQLite database)\n")
+
+    # Test conversation
+    test_messages = [
+        "Remember that I prefer dark mode themes",
+        "What theme do I prefer?",
+    ]
+
+    for msg in test_messages:
+        print(f"User: {msg}")
+        response = chain_with_history.invoke({"input": msg}, config=config)
+        print(f"AI: {response}\n")
+
+    print(f"Database created: {db_path}")
+    print("Messages persist across restarts!")
+
+    # Cleanup for demo
+    if os.path.exists(db_path):
+        os.remove(db_path)
+
 if __name__ == "__main__":
     # demo_basic_memory()
     # demo_multi_sessions()
     # demo_message_trimming()
     # demo_windowed_memory()
-    demo_summary_memory()
+    # demo_summary_memory()
+    exercise_persistent_memory()
