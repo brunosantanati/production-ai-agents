@@ -98,6 +98,37 @@ def demo_accumulating_state():
     print(f"  Messages: {result['messages']}")
     print(f"  Count: {result['count']}")
 
+# === Message State (Common Pattern) ===
+
+from langgraph.graph import add_messages
+
+
+class MessageState(TypedDict):
+    messages: Annotated[list[BaseMessage], add_messages]
+
+
+def demo_message_state():
+    llm = init_chat_model("gpt-4o-mini", temperature=0)
+
+    def chat_node(state: MessageState) -> dict:
+        response = llm.invoke(state["messages"])
+        return {"messages": [response]}
+
+    graph = StateGraph(MessageState)
+    graph.add_node("chat_node", chat_node)
+    graph.add_edge(START, "chat_node")
+    graph.add_edge("chat_node", END)
+
+    app = graph.compile()
+
+    result = app.invoke({"messages": [HumanMessage(content="Say Hello in Tagalog")]})
+
+    print("\nMessage State Result:")
+    for msg in result["messages"]:
+        role = "Human" if isinstance(msg, HumanMessage) else "AI"
+        print(f"  {role}: {msg.content}")
+
 if __name__ == "__main__":
     # demo_simple_graph()
-    demo_accumulating_state()
+    # demo_accumulating_state()
+    demo_message_state()
