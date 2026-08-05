@@ -199,8 +199,57 @@ def demo_multi_node_graph():
     print(f"  Enhanced: {result['enhanced'][:100]}...")
     print(f"  Final: {result['final']}")
 
+# Exercise
+def exercise_first_langgraph():
+    """
+    EXERCISE: Create a LangGraph that:
+    1. Takes a topic as input
+    2. Node 1: Generates 3 questions about the topic
+    3. Node 2: Answers one of the questions
+    4. Returns both questions and answer
+    """
+
+    class QAState(TypedDict):
+        topic: str
+        questions: str
+        answer: str
+
+    llm = init_chat_model("gpt-4o-mini", temperature=0)
+
+    def generate_questions(state: QAState) -> dict:
+        response = llm.invoke(
+            f"Generate 3 interesting questions about: {state['topic']}\n"
+            "Format: numbered list"
+        )
+        return {"questions": response.content}
+
+    def answer_question(state: QAState) -> dict:
+        response = llm.invoke(
+            f"Answer the first question from this list:\n{state['questions']}"
+        )
+        return {"answer": response.content}
+
+    graph = StateGraph(QAState)
+    
+    graph.add_node("generate_questions", generate_questions)
+    graph.add_node("answer_question", answer_question)
+
+    graph.add_edge(START, "generate_questions")
+    graph.add_edge("generate_questions", "answer_question")
+    graph.add_edge("answer_question", END)
+
+    app = graph.compile()
+
+    result = app.invoke({"topic": "The future of renewable energy"})
+
+    print("\nExercise Result:")
+    print(f"  Topic: {result['topic']}")
+    print(f"  Questions: {result['questions']}")
+    print(f"  Answer: {result['answer']}")
+
 if __name__ == "__main__":
     # demo_simple_graph()
     # demo_accumulating_state()
     # demo_message_state()
-    demo_multi_node_graph()
+    # demo_multi_node_graph()
+    exercise_first_langgraph()
