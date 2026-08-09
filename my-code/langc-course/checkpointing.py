@@ -104,6 +104,45 @@ def demo_sqlite_persistence():
         print(f"Session 2 - AI: {result['messages'][-1].content}")
 
 
+def demo_state_inspection():
+    """Inspect and manipulate checkpoint state."""
+
+    def chat(state: ChatState) -> dict:
+        response = llm.invoke(state["messages"])
+        return {"messages": [response]}
+
+    graph = StateGraph(ChatState)
+    graph.add_node("chat", chat)
+    graph.add_edge(START, "chat")
+    graph.add_edge("chat", END)
+
+    memory = MemorySaver()
+    app = graph.compile(checkpointer=memory)
+    config = {"configurable": {"thread_id": "inspect-demo"}}
+
+    print("\nState Inspection Demo:\n")
+
+    # Build up some state
+    app.invoke({"messages": [HumanMessage(content="Hello!")]}, config)
+    app.invoke({"messages": [HumanMessage(content="How are you?")]}, config)
+
+    # Get current state
+    state = app.get_state(config)
+
+    print("Current state:")
+    print(f"  Next node: {state.next}")
+    print(f"  Message count: {len(state.values['messages'])}")
+
+    # Get state history
+    print("\nState history:")
+    for i, snapshot in enumerate(app.get_state_history(config)):
+        print(f"  Checkpoint {i}: {len(snapshot.values['messages'])} messages")
+        if i >= 3:
+            print("  ...")
+            break
+
+
 if __name__ == "__main__":
     # demo_memory_saver()
-    demo_sqlite_persistence()
+    # demo_sqlite_persistence()
+    demo_state_inspection()
