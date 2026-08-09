@@ -142,7 +142,56 @@ def demo_state_inspection():
             break
 
 
+def demo_branching_conversations():
+    """Branch conversations from checkpoints."""
+
+    def chat(state: ChatState) -> dict:
+        response = llm.invoke(state["messages"])
+        return {"messages": [response]}
+
+    graph = StateGraph(ChatState)
+    graph.add_node("chat", chat)
+    graph.add_edge(START, "chat")
+    graph.add_edge("chat", END)
+
+    memory = MemorySaver()
+    app = graph.compile(checkpointer=memory)
+
+    print("\nBranching Conversations Demo:\n")
+
+    # Main conversation
+    main_config = {"configurable": {"thread_id": "main"}}
+    app.invoke(
+        {"messages": [HumanMessage(content="What's the weather like?")]}, main_config
+    )
+
+    # Get checkpoint to branch from
+    main_state = app.get_state(main_config)
+
+    # Branch A - Beach vacation
+    branch_a_config = {"configurable": {"thread_id": "branch-beach"}}
+    # Copy state to new thread
+    app.update_state(branch_a_config, main_state.values)
+
+    result_a = app.invoke(
+        {"messages": [HumanMessage(content="What about a beach vacation?")]},
+        branch_a_config,
+    )
+    print(f"Branch A (Beach): {result_a['messages'][-1].content[:100]}...")
+
+    # Branch B - Mountain adventure
+    branch_b_config = {"configurable": {"thread_id": "branch-mountain"}}
+    app.update_state(branch_b_config, main_state.values)
+
+    result_b = app.invoke(
+        {"messages": [HumanMessage(content="What about mountain hiking?")]},
+        branch_b_config,
+    )
+    print(f"Branch B (Mountain): {result_b['messages'][-1].content[:100]}...")
+
+
 if __name__ == "__main__":
     # demo_memory_saver()
     # demo_sqlite_persistence()
-    demo_state_inspection()
+    # demo_state_inspection()
+    demo_branching_conversations()
