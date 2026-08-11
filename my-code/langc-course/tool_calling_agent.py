@@ -80,6 +80,7 @@ def create_tool_agent():
     def should_continue(state: AgentState) -> Literal["tools", "end"]:
         """Check if we should continue to tools or end."""
         last_message = state["messages"][-1]
+        # print(f"last_message: {last_message}")
 
         # If no tool calls, we're done
         if not hasattr(last_message, "tool_calls") or not last_message.tool_calls:
@@ -124,12 +125,26 @@ def demo_tool_agent():
 
         result = agent.invoke({"messages": [HumanMessage(content=query)]})
 
+        # print_all_messages(result)
+
         # Get final response
         final_message = result["messages"][-1]
         print(f"Response: {final_message.content}")
         print(f"Total messages: {len(result['messages'])}")
         print("-" * 40)
 
+
+def print_all_messages(result: dict):
+    all_messages = result["messages"]
+    for msg in all_messages:
+        role = msg.__class__.__name__
+        
+        if hasattr(msg, "tool_calls") and msg.tool_calls:
+            # Displays the tool names and arguments requested by the LLM
+            calls = [f"{t['name']}({t['args']})" for t in msg.tool_calls]
+            print(f"Role: {role} | Tool Calls: {', '.join(calls)}")
+        else:
+            print(f"Role: {role} | Content: {msg.content}")
 
 if __name__ == "__main__":
     demo_tool_agent()
