@@ -146,5 +146,42 @@ def print_all_messages(result: dict):
         else:
             print(f"Role: {role} | Content: {msg.content}")
 
+
+def demo_tool_execution_trace():
+    """Show detailed tool execution trace."""
+
+    agent = create_tool_agent()
+
+    print("\nTool Execution Trace:\n")
+
+    result = agent.invoke(
+        {
+            "messages": [
+                HumanMessage(content="Calculate 15% of 250 and check weather in Paris")
+            ]
+        }
+    )
+
+    for i, msg in enumerate(result["messages"]):
+        msg_type = type(msg).__name__
+        print(f"\n[{i}] {msg_type}:")
+
+        if isinstance(msg, HumanMessage):
+            print(f"  Content: {msg.content}")
+
+        elif isinstance(msg, AIMessage):
+            if msg.tool_calls:
+                print(f"  Tool calls: {len(msg.tool_calls)}")
+                for tc in msg.tool_calls:
+                    print(f"    - {tc['name']}({tc['args']})")
+            else:
+                print(f"  Content: {msg.content}")
+
+        elif isinstance(msg, ToolMessage):
+            print(f"  Tool: {msg.name}")
+            print(f"  Result: {msg.content}")
+
+
 if __name__ == "__main__":
-    demo_tool_agent()
+    # demo_tool_agent()
+    demo_tool_execution_trace()
