@@ -134,19 +134,6 @@ def demo_tool_agent():
         print("-" * 40)
 
 
-def print_all_messages(result: dict):
-    all_messages = result["messages"]
-    for msg in all_messages:
-        role = msg.__class__.__name__
-        
-        if hasattr(msg, "tool_calls") and msg.tool_calls:
-            # Displays the tool names and arguments requested by the LLM
-            calls = [f"{t['name']}({t['args']})" for t in msg.tool_calls]
-            print(f"Role: {role} | Tool Calls: {', '.join(calls)}")
-        else:
-            print(f"Role: {role} | Content: {msg.content}")
-
-
 def demo_tool_execution_trace():
     """Show detailed tool execution trace."""
 
@@ -229,9 +216,25 @@ def demo_tool_with_errors():
 
     for query in queries:
         result = agent.invoke({"messages": [HumanMessage(content=query)]})
+
+        # print_all_messages(result)
+
         print(f"Query: {query}")
         print(f"Response: {result['messages'][-1].content}")
         print("-" * 40)
+
+
+def print_all_messages(result: dict):
+    all_messages = result["messages"]
+    for msg in all_messages:
+        role = msg.__class__.__name__
+        
+        if hasattr(msg, "tool_calls") and msg.tool_calls:
+            # Displays the tool names and arguments requested by the LLM
+            calls = [f"{t['name']}({t['args']})" for t in msg.tool_calls]
+            print(f"Role: {role} | Tool Calls: {', '.join(calls)}")
+        else:
+            print(f"Role: {role} | Content: {msg.content}")
 
 
 if __name__ == "__main__":
