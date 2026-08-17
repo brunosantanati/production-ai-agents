@@ -133,5 +133,149 @@ def demo_message_passing():
             print(f"{msg.content}\n")
 
 
+# ============================================================
+# Pattern 2: Shared State (Typed Fields)
+# Agents communicate through structured state fields
+# ============================================================
+class SharedFieldsState(TypedDict):
+    query: str
+    # Each agent writes to its own field — others can read it
+    raw_data: Annotated[list[dict], operator.add]
+    analysis: str
+    recommendations: list[str]
+    confidence_score: float
+
+
+def create_shared_fields_pipeline():
+    """Agents communicate through typed state fields, not messages."""
+
+    def data_collector(state: SharedFieldsState) -> dict:
+        """Collects data and writes to the raw_data field."""
+        response = llm.invoke(
+            [
+                SystemMessage(
+                    content=(
+                        "You are a data collector. Given the query, produce 3 data points "
+                        "as a JSON array of objects with 'source' and 'finding' keys. "
+                        "Return ONLY the JSON array, no markdown."
+                    )
+                ),
+                HumanMessage(content=state["query"]),
+            ]
+        )
+
+        try:
+            data = json.loads(response.content)
+        except json.JSONDecodeError:
+            data = [{"source": "llm", "finding": response.content}]
+
+        return {"raw_data": data}
+
+    def analyst(state: SharedFieldsState) -> dict:
+        """Reads raw_data field, writes analysis and confidence."""
+        data_summary = json.dumps(state["raw_data"], indent=2)
+
+        response = llm.invoke(
+            [
+                SystemMessage(
+                    content=(
+                        "You are a data analyst. Analyze the collected data and provide: "
+                        "1) A brief analysis (2-3 sentences), and "
+                        "2) A confidence score from 0.0 to 1.0. "
+                        "Format: ANALYSIS: <text>\nCONFIDENCE: <number>"
+                    )
+                ),
+                HumanMessage(
+                    content=f"Query: {state['query']}\n\nData:\n{data_summary}"
+                ),
+            ]
+        )
+
+        content = response.content
+        analysis = content
+        confidence = 0.7  # default
+
+        if "CONFIDENCE:" in content:
+            parts = content.split("CONFIDENCE:")
+            analysis = parts[0].replace("ANALYSIS:", "").strip()
+            try:
+                confidence = float(parts[1].strip())
+            except ValueError:
+                confidence = 0.7
+
+        return {"analysis": analysis, "confidence_score": confidence}
+
+    def advisor(state: SharedFieldsState) -> dict:
+        """Reads analysis + confidence, writes recommendations."""
+        response = llm.invoke(
+            [
+                SystemMessage(
+                    content=(
+                        "You are a strategic advisor. Based on the analysis and "
+                        "confidence score, provide 3 actionable recommendations. "
+                        "Return them as a JSON array of strings. "
+                        "Return ONLY the JSON array, no markdown."
+                    )
+                ),
+                HumanMessage(
+                    content=(
+                        f"Query: {state['query']}\n"
+                        f"Analysis: {state['analysis']}\n"
+                        f"Confidence: {state['confidence_score']}"
+                    )
+                ),
+            ]
+        )
+
+        try:
+            recs = json.loads(response.content)
+        except json.JSONDecodeError:
+            recs = [response.content]
+
+        return {"recommendations": recs}
+
+    graph = StateGraph(SharedFieldsState)
+
+    graph.add_node("data_collector", data_collector)
+    graph.add_node("analyst", analyst)
+    graph.add_node("advisor", advisor)
+
+    graph.add_edge(START, "data_collector")
+    graph.add_edge("data_collector", "analyst")
+    graph.add_edge("analyst", "advisor")
+    graph.add_edge("advisor", END)
+
+    return graph.compile()
+
+
+def demo_shared_state():
+    """Demo shared state fields between agents."""
+    agent = create_shared_fields_pipeline()
+
+    print("Shared State Demo:\n")
+
+    result = agent.invoke(
+        {
+            "query": "Should a small business invest in AI automation in 2026?",
+            "raw_data": [],
+            "analysis": "",
+            "recommendations": [],
+            "confidence_score": 0.0,
+        }
+    )
+
+    print(f"Data collected: {len(result['raw_data'])} points")
+    for d in result["raw_data"]:
+        print(f"  - [{d.get('source', 'N/A')}] {d.get('finding', 'N/A')[:80]}...")
+
+    print(f"\nAnalysis: {result['analysis'][:200]}...")
+    print(f"Confidence: {result['confidence_score']}")
+
+    print(f"\nRecommendations:")
+    for i, rec in enumerate(result["recommendations"], 1):
+        print(f"  {i}. {rec}")
+
+
 if __name__ == "__main__":
-    demo_message_passing()
+    # demo_message_passing()
+    demo_shared_state()
