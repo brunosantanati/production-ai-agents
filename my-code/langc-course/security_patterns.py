@@ -196,7 +196,68 @@ def demo_llm_guard():
             print(f"   Reason: {result.get('reason')}")
 
 
+# === Output Validation ===
+
+
+class OutputValidator:
+    """Validate LLM outputs before returning to user."""
+
+    def __init__(self):
+        self.pii_detector = PIIDetector()
+
+    def validate(self, output: str) -> tuple[bool, str, Optional[str]]:
+        """
+        Validate output.
+        Returns: (is_valid, cleaned_output, reason_if_invalid)
+        """
+        # Check for PII leakage
+        pii_found = self.pii_detector.detect(output)
+        if pii_found:
+            cleaned = self.pii_detector.mask(output)
+            return False, cleaned, f"PII detected and masked: {list(pii_found.keys())}"
+
+        # Check for harmful content patterns
+        harmful_patterns = [
+            r"here('s| is) (how|the way) to (hack|steal|attack)",
+            r"password is",
+            r"api[_\s]?key",
+        ]
+
+        for pattern in harmful_patterns:
+            if re.search(pattern, output, re.IGNORECASE):
+                return (
+                    False,
+                    "[CONTENT BLOCKED]",
+                    "Potentially harmful content detected",
+                )
+
+        return True, output, None
+
+
+def demo_output_validation():
+    """Demonstrate output validation."""
+
+    validator = OutputValidator()
+
+    outputs = [
+        "The capital of France is Paris.",
+        "Contact support at help@company.com for assistance.",
+        "Here's how to hack into the system...",
+    ]
+
+    print("\nOutput Validation Demo:\n")
+
+    for output in outputs:
+        is_valid, cleaned, reason = validator.validate(output)
+        status = "✅ VALID" if is_valid else "⚠️ CLEANED"
+        print(f"{status}: {output[:50]}...")
+        if reason:
+            print(f"   Reason: {reason}")
+            print(f"   Cleaned: {cleaned[:50]}...")
+
+
 if __name__ == "__main__":
     # demo_input_sanitization()
     # demo_pii_detection()
-    demo_llm_guard()
+    # demo_llm_guard()
+    demo_output_validation()
