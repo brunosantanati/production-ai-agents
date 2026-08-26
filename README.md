@@ -28,6 +28,7 @@ uv add langchain-huggingface
 uv add langchain_chroma
 uv add rank_bm25
 uv add langgraph-checkpoint-sqlite
+uv add pytest
 uv sync
 touch .env
 uv run main.py
