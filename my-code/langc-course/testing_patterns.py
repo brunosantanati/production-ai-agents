@@ -122,9 +122,82 @@ def demo_integration_tests():
         print(f"   Response: {r['response'][:50]}...")
 
 
+# === Evaluation Framework ===
+class LLMEvaluator:
+    """Use LLM to evaluate LLM outputs."""
+
+    def __init__(self):
+        self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+
+    @traceable(name="evaluate_response")
+    def evaluate(self, question: str, response: str, reference: str = None) -> dict:
+        """Evaluate a response on multiple dimensions."""
+
+        eval_prompt = ChatPromptTemplate.from_template(
+            """
+Evaluate this response on a scale of 1-10 for each criterion.
+
+Question: {question}
+Response: {response}
+{reference_section}
+
+Rate each criterion (1-10):
+1. Correctness: Is the information accurate?
+2. Relevance: Does it answer the question?
+3. Clarity: Is it easy to understand?
+4. Completeness: Does it fully address the question?
+
+Respond with ONLY a JSON object:
+{{"correctness": X, "relevance": X, "clarity": X, "completeness": X, "overall": X}}
+"""
+        )
+
+        reference_section = ""
+        if reference:
+            reference_section = f"Reference answer: {reference}"
+
+        import json
+
+        response_obj = self.llm.invoke(
+            eval_prompt.format(
+                question=question,
+                response=response,
+                reference_section=reference_section,
+            )
+        )
+
+        try:
+            scores = json.loads(response_obj.content)
+            return scores
+        except json.JSONDecodeError:
+            return {"error": "Failed to parse evaluation"}
+
+
+def demo_evaluation():
+    """Demonstrate LLM evaluation."""
+
+    evaluator = LLMEvaluator()
+
+    # Test case
+    question = "Explain what machine learning is in simple terms."
+    response = "Machine learning is when computers learn from data instead of being explicitly programmed. It's like teaching a child by showing examples rather than giving them rules."
+    reference = "Machine learning is a type of artificial intelligence where computers learn patterns from data to make predictions or decisions."
+
+    print("LLM Evaluation Demo:\n")
+    print(f"Question: {question}")
+    print(f"Response: {response}")
+
+    scores = evaluator.evaluate(question, response, reference)
+
+    print("\nScores:")
+    for metric, score in scores.items():
+        print(f"  {metric}: {score}/10")
+
+
 if __name__ == "__main__":
     # test_qa_chain_with_mock()
     # print("All tests passed!")
     # test_qa_chain_handles_empty_response()
     # print("All tests passed!")
-    demo_integration_tests()
+    # demo_integration_tests()
+    demo_evaluation()
