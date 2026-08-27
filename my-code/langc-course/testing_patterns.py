@@ -194,10 +194,95 @@ def demo_evaluation():
         print(f"  {metric}: {score}/10")
 
 
+# === Regression Testing ===
+class RegressionTestRunner:
+    """Run regression tests against a test dataset."""
+
+    def __init__(self, chain: Callable):
+        self.chain = chain
+        self.evaluator = LLMEvaluator()
+
+    @traceable(name="regression_test")
+    def run(self, test_cases: list[dict]) -> dict:
+        """
+        Run regression tests.
+
+        test_cases: [{"input": ..., "expected": ...}, ...]
+        """
+        results = []
+        total_score = 0
+
+        for case in test_cases:
+            # Get response from chain
+            response = self.chain(case["input"])
+
+            # Evaluate
+            scores = self.evaluator.evaluate(
+                question=case["input"],
+                response=response,
+                reference=case.get("expected"),
+            )
+
+            overall = scores.get("overall", 0)
+            total_score += overall
+
+            results.append(
+                {
+                    "input": case["input"],
+                    "response": response,
+                    "expected": case.get("expected"),
+                    "scores": scores,
+                    "passed": overall >= 7,  # Threshold
+                }
+            )
+
+        return {
+            "total": len(results),
+            "passed": sum(1 for r in results if r["passed"]),
+            "average_score": total_score / len(results) if results else 0,
+            "results": results,
+        }
+
+
+def demo_regression_testing():
+    """Demonstrate regression testing."""
+
+    # Simple chain to test
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+
+    def qa_chain(question: str) -> str:
+        return llm.invoke(question).content
+
+    # Test cases
+    test_cases = [
+        {
+            "input": "What is Python?",
+            "expected": "Python is a programming language known for its simplicity.",
+        },
+        {"input": "What is 10 * 5?", "expected": "50"},
+    ]
+
+    runner = RegressionTestRunner(qa_chain)
+
+    print("\nRegression Test Results:\n")
+
+    results = runner.run(test_cases)
+
+    print(f"Passed: {results['passed']}/{results['total']}")
+    print(f"Average Score: {results['average_score']:.1f}/10")
+
+    for r in results["results"]:
+        status = "✅" if r["passed"] else "❌"
+        print(f"\n{status} {r['input']}")
+        print(f"   Response: {r['response'][:50]}...")
+        print(f"   Overall Score: {r['scores'].get('overall', 'N/A')}/10")
+
+
 if __name__ == "__main__":
     # test_qa_chain_with_mock()
     # print("All tests passed!")
     # test_qa_chain_handles_empty_response()
     # print("All tests passed!")
     # demo_integration_tests()
-    demo_evaluation()
+    # demo_evaluation()
+    demo_regression_testing()
