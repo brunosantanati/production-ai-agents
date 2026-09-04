@@ -79,8 +79,11 @@ def demo_retry_pattern():
 
 if __name__ == "__main__":
     # Example usage of the unreliable API call with retry logic
-    try:
-        result = unreliable_api_call("Hello, World!")
-        print(result)
-    except Exception as e:
-        print(f"API call failed after retries: {e}")
+    # try:
+    #     result = unreliable_api_call("Hello, World!")
+    #     print(result)
+    # except Exception as e:
+    #     print(f"API call failed after retries: {e}")
+
+    # Run the retry pattern demonstration
+    demo_retry_pattern()
