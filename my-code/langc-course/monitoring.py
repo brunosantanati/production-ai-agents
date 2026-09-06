@@ -207,6 +207,6 @@ def demo_monitoring():
 
 
 if __name__ == "__main__":
-    logger = setup_logging()
-    logger.info("Logging setup complete", extra={"extra_data": {"app": "langgraph"}})
-    # demo_monitoring()
+    # logger = setup_logging()
+    # logger.info("Logging setup complete", extra={"extra_data": {"app": "langgraph"}})
+    demo_monitoring()
