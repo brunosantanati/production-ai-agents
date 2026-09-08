@@ -41,20 +41,8 @@ touch app/__init__.py tests/__init__.py
 touch app/config.py app/models.py app/security.py app/cache.py app/monitoring.py app/agent.py app/main.py
 touch tests/test_security.py tests/test_cache.py tests/test_api.py
 touch .env.example
-
-uv run python -c "
-from app.config import get_settings
-settings = get_settings()
-print(f'Environment:    {settings.app_env}')
-print(f'Primary model:  {settings.primary_model}')
-print(f'Fallback model: {settings.fallback_model}')
-print(f'Rate limit:     {settings.rate_limit}')
-print(f'Cache TTL:      {settings.cache_ttl_seconds}s')
-print(f'Max retries:    {settings.max_retries}')
-print(f'Is production:  {settings.is_production}')
-print()
-print('Config loaded successfully!')
-"
+uv add langchain-openai
+./Production-test-commands.sh
 
 Error:
 -------
