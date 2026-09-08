@@ -1,1 +1,2 @@
-![Request Flow Diagram](request-flow-diagram.png)
+![Request Flow Diagram](img/request-flow-diagram.png)
+![Fallback Flow Diagram](img/fallback-flow-diagram.png)
