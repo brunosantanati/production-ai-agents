@@ -46,6 +46,18 @@ touch .env.example
 uv add langchain-openai
 ./Production-test-commands.sh
 uv run uvicorn app.main:app --reload --port 8000
+uv run pytest tests/test_security.py -v
+uv run pytest tests/test_cache.py -v
+uv run pytest tests/test_security.py tests/test_cache.py -v
+touch Dockerfile
+touch docker-compose.yml
+docker compose up --build
+```
+
+## API URLs
+```
+http://0.0.0.0:8000/health
+http://0.0.0.0:8000/docs
 ```
 
 ## Error Fix
